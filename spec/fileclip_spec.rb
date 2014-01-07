@@ -127,7 +127,6 @@ describe FileClip do
         let(:delayed_image) { DelayedImage.create }
 
         before :each do
-          FileClip.stub(:delayed?).and_return true
           FileClip.stub(:resque_enabled?).and_return true
           stub_const "Resque", Class.new
 

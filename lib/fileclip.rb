@@ -15,7 +15,9 @@ module FileClip
   class << self
 
     def process(klass, instance_id, name)
-      klass.constantize.find(instance_id).send("process_#{name}_from_filepicker")
+      obj = klass.constantize.find(instance_id)
+      obj.send("process_#{name}_from_filepicker")
+      obj.update_column("#{name}_processing", false) if obj.respond_to?("#{name}_processing".to_sym)
     end
 
     # TODO: replace with checking for delayed options?
@@ -65,12 +67,12 @@ module FileClip
         end
   
         def process_#{name}_with_resque!
-          update_column(:#{name}_processing, true) if FileClip.delayed?
+          update_column(:#{name}_processing, true) if self.class.column_names.include?('#{name}_processing')
           ::Resque.enqueue(FileClip::Jobs::Resque, self.class.name, self.id, :#{name})
         end
   
         def process_#{name}_with_sidekiq!
-          update_column(:#{name}_processing, true) if FileClip.delayed?
+          update_column(:#{name}_processing, true) if self.class.column_names.include?('#{name}_processing')
           FileClip::Jobs::Sidekiq.perform_async(self.class.name, self.id, :#{name})
         end
   
